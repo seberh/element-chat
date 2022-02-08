@@ -39,6 +39,9 @@ You should have the develop branch cloned by default.
 - Run synapse, from the Synapse folder you just cloned
 
 ```bash
+'apt-get install python3-pip'
+'sudo apt install python3-virtualenv'
+'run all with sudo'
 virtualenv -p python3 env
 source env/bin/activate
 pip install -e .
