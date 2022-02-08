@@ -16,6 +16,7 @@
 
 package im.vector.app.ui.robot
 
+import android.util.Log
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.matcher.ViewMatchers
 import com.adevinta.android.barista.assertion.BaristaVisibilityAssertions
@@ -27,6 +28,8 @@ import im.vector.app.espresso.tools.waitUntilViewVisible
 class OnboardingServersRobot {
 
     fun crawlSignUp() {
+        Log.d("yyyy", "crawlSignUp")
+
         BaristaVisibilityAssertions.assertDisplayed(R.id.loginServerTitle, R.string.login_server_title)
         crawlMatrixServer(isSignUp = true)
         crawlEmsServer()

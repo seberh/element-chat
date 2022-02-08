@@ -18,6 +18,7 @@ package im.vector.app.features.login
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -45,6 +46,8 @@ class LoginSplashFragment @Inject constructor(
 
     override fun onCreate(savedInstanceState: Bundle?) {
         analyticsScreenName = Screen.ScreenName.Welcome
+        Log.d("yyyy", "test message")
+
         super.onCreate(savedInstanceState)
     }
 

@@ -17,6 +17,7 @@
 package im.vector.app.features.onboarding.ftueauth
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -42,9 +43,11 @@ class FtueAuthServerSelectionFragment @Inject constructor() : AbstractFtueAuthFr
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d("yyyy", "server mode")
 
-        initViews()
-        initTextViews()
+        selectOther()
+//        initViews()
+//        initTextViews()
     }
 
     private fun initViews() {
@@ -79,6 +82,8 @@ class FtueAuthServerSelectionFragment @Inject constructor() : AbstractFtueAuthFr
     }
 
     private fun selectOther() {
+        Log.d("yyyy", "other server mode")
+
         viewModel.handle(OnboardingAction.UpdateServerType(ServerType.Other))
     }
 

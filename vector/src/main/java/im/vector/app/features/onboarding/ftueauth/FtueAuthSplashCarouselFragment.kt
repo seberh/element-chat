@@ -18,6 +18,7 @@ package im.vector.app.features.onboarding.ftueauth
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -63,6 +64,7 @@ class FtueAuthSplashCarouselFragment @Inject constructor(
     }
 
     private fun setupViews() {
+        Log.d("yyyy", "ftue carousel")
         val carouselAdapter = carouselController.adapter
         views.splashCarousel.adapter = carouselAdapter
         TabLayoutMediator(views.carouselIndicator, views.splashCarousel) { _, _ -> }.attach()
@@ -70,6 +72,7 @@ class FtueAuthSplashCarouselFragment @Inject constructor(
 
         val isAlreadyHaveAccountEnabled = vectorFeatures.isOnboardingAlreadyHaveAccountSplashEnabled()
         views.loginSplashSubmit.apply {
+            Log.d("yyyy", "create account 3")
             setText(if (isAlreadyHaveAccountEnabled) R.string.login_splash_create_account else R.string.login_splash_submit)
             debouncedClicks { splashSubmit(isAlreadyHaveAccountEnabled) }
         }

@@ -16,6 +16,7 @@
 
 package im.vector.app.ui.robot
 
+import android.util.Log
 import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.pressBack
@@ -39,6 +40,7 @@ class OnboardingRobot {
     }
 
     private fun crawlGetStarted() {
+        Log.d("yyyy", "create account 1")
         clickOn(R.id.loginSplashSubmit)
         OnboardingServersRobot().crawlSignUp()
         pressBack()
@@ -65,6 +67,7 @@ class OnboardingRobot {
         waitUntilViewVisible(withId(R.id.loginSplashSubmit))
         assertDisplayed(R.id.loginSplashSubmit, R.string.login_splash_create_account)
         if (createAccount) {
+            Log.d("yyyy", "create account 2" )
             clickOn(R.id.loginSplashSubmit)
         } else {
             clickOn(R.id.loginSplashAlreadyHaveAccount)

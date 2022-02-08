@@ -17,6 +17,7 @@
 package im.vector.app.features.onboarding.ftueauth
 
 import android.content.Intent
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.ViewCompat
@@ -155,9 +156,15 @@ class FtueAuthVariant(
                 activity.addFragmentToBackstack(views.loginFragmentContainer,
                         FtueAuthServerSelectionFragment::class.java,
                         option = { ft ->
+                            Log.d("yyyy", "login mode")
+
                             if (vectorFeatures.isOnboardingUseCaseEnabled()) {
+                                Log.d("yyyy", "onboarding case enabled")
+
                                 ft.setCustomAnimations(enterAnim, exitAnim, popEnterAnim, popExitAnim)
                             } else {
+                                Log.d("yyyy", "onboarding not enabled")
+
                                 activity.findViewById<View?>(R.id.loginSplashLogo)?.let { ft.addSharedElement(it, ViewCompat.getTransitionName(it) ?: "") }
                                 // TODO Disabled because it provokes a flickering
                                 // Disable transition of text

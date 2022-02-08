@@ -17,6 +17,7 @@
 package im.vector.app.features.onboarding
 
 import android.content.Intent
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.ViewCompat
@@ -170,6 +171,8 @@ class Login2Variant(
                             // ft.setCustomAnimations(enterAnim, exitAnim, popEnterAnim, popExitAnim)
                         })
             is LoginViewEvents2.OpenHomeServerUrlFormScreen                -> {
+                Log.d("yyyy", "add login server")
+
                 activity.addFragmentToBackstack(views.loginFragmentContainer,
                         LoginServerUrlFormFragment2::class.java,
                         option = commonOption)

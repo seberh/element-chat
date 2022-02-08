@@ -19,6 +19,7 @@ package im.vector.app.features.login
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.ViewCompat
@@ -81,6 +82,8 @@ open class LoginActivity : VectorBaseActivity<ActivityLoginBinding>(), UnlockedA
     override fun getCoordinatorLayout() = views.coordinatorLayout
 
     override fun initUiAndData() {
+        Log.d("yyyy", "test message login activity")
+
         analyticsScreenName = Screen.ScreenName.Login
 
         if (isFirstCreation()) {

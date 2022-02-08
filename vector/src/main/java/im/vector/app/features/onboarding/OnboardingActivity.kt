@@ -19,6 +19,7 @@ package im.vector.app.features.onboarding
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import dagger.hilt.android.AndroidEntryPoint
 import im.vector.app.core.extensions.lazyViewModel
 import im.vector.app.core.platform.VectorBaseActivity
@@ -47,6 +48,8 @@ class OnboardingActivity : VectorBaseActivity<ActivityLoginBinding>(), UnlockedA
     }
 
     override fun initUiAndData() {
+        Log.d("yyyy", "onboarding activity")
+
         onboardingVariant.initUiAndData(isFirstCreation())
     }
 
