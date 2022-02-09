@@ -21,6 +21,7 @@ package im.vector.app.features.settings
 import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -49,6 +50,7 @@ import im.vector.app.core.utils.TextUtils
 import im.vector.app.core.utils.getSizeOfFiles
 import im.vector.app.core.utils.toast
 import im.vector.app.databinding.DialogChangePasswordBinding
+import im.vector.app.databinding.DialogDisablePasswordProtectionBinding
 import im.vector.app.features.MainActivity
 import im.vector.app.features.MainActivityArgs
 import im.vector.app.features.discovery.DiscoverySettingsFragment
@@ -77,7 +79,9 @@ class VectorSettingsGeneralFragment @Inject constructor(
         VectorSettingsBaseFragment(),
         GalleryOrCameraDialogHelper.Listener {
 
-    override var titleRes = R.string.settings_general_title
+//    override var titleRes = R.string.settings_general_title
+    override var titleRes = R.string.room_list_quick_actions_settings
+
     override val preferenceXmlRes = R.xml.vector_settings_general
 
     private val galleryOrCameraDialogHelper = GalleryOrCameraDialogHelper(this, colorProvider)
@@ -93,6 +97,9 @@ class VectorSettingsGeneralFragment @Inject constructor(
     }
     private val mPasswordPreference by lazy {
         findPreference<VectorPreference>(VectorPreferences.SETTINGS_CHANGE_PASSWORD_PREFERENCE_KEY)!!
+    }
+    private val mPasswordProtection by lazy {
+        findPreference<VectorPreference>(VectorPreferences.SETTINGS_PASSWORD_PROTECTION_KEY)!!
     }
     private val mIdentityServerPreference by lazy {
         findPreference<VectorPreference>(VectorPreferences.SETTINGS_IDENTITY_SERVER_PREFERENCE_KEY)!!
@@ -119,6 +126,8 @@ class VectorSettingsGeneralFragment @Inject constructor(
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        Log.d("yyyy", "General Settings")
 
         observeUserAvatar()
         observeUserDisplayName()
@@ -178,6 +187,15 @@ class VectorSettingsGeneralFragment @Inject constructor(
             }
         } else {
             mPasswordPreference.isVisible = false
+        }
+
+        mPasswordProtection.onPreferenceClickListener = Preference.OnPreferenceClickListener {
+            try {
+                onPasswordProtectionDisable()
+            } catch (e : Exception) {
+                Log.d("yyyy", e.message.toString())
+            }
+            false
         }
 
         val openDiscoveryScreenPreferenceClickListener = Preference.OnPreferenceClickListener {
@@ -445,6 +463,92 @@ class VectorSettingsGeneralFragment @Inject constructor(
                                 views.changePasswordOldPwdTil.error = getString(R.string.settings_fail_to_update_password_invalid_current_password)
                             } else {
                                 views.changePasswordOldPwdTil.error = getString(R.string.settings_fail_to_update_password)
+                            }
+                        })
+                    }
+                }
+            }
+            dialog.show()
+        }
+    }
+
+
+    /**
+     * Insert password to disable pass protection.
+     */
+    private fun onPasswordProtectionDisable() {
+        activity?.let { activity ->
+            val view: ViewGroup = activity.layoutInflater.inflate(R.layout.dialog_disable_password_protection, null) as ViewGroup
+            val views = DialogDisablePasswordProtectionBinding.bind(view)
+
+            val dialog = MaterialAlertDialogBuilder(activity)
+                    .setView(view)
+                    .setCancelable(false)
+                    .setPositiveButton(R.string.settings_disable_password, null)
+                    .setNegativeButton(R.string.action_cancel, null)
+                    .setOnDismissListener {
+                        view.hideKeyboard()
+                    }
+                    .create()
+
+            dialog.setOnShowListener {
+                val updateButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                val cancelButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                updateButton.isEnabled = false
+
+                fun updateUi() {
+                    val pwd = views.inputPasswordConfirmationText.text.toString()
+
+                    updateButton.isEnabled = pwd.isNotEmpty()
+                }
+
+                views.inputPasswordConfirmationText.addTextChangedListener(object : SimpleTextWatcher() {
+                    override fun afterTextChanged(s: Editable) {
+                        views.inputPasswordConfirmationText.error = null
+                        updateUi()
+                    }
+                })
+
+                fun showPasswordLoadingView(toShow: Boolean) {
+                    if (toShow) {
+                        views.inputPasswordConfirmationText.isEnabled = false
+                        views.changePasswordLoader.isVisible = true
+                        updateButton.isEnabled = false
+                        cancelButton.isEnabled = false
+                    } else {
+                        views.inputPasswordConfirmationText.isEnabled = true
+                        views.changePasswordLoader.isVisible = false
+                        updateButton.isEnabled = true
+                        cancelButton.isEnabled = true
+                    }
+                }
+
+                updateButton.debouncedClicks {
+                    // Hide passwords during processing
+                    views.inputPasswordConfirmationText.hidePassword()
+
+                    view.hideKeyboard()
+
+                    val pwd = views.inputPasswordConfirmationText.text.toString()
+
+                    showPasswordLoadingView(true)
+                    lifecycleScope.launch {
+                        val result = runCatching {
+//                            session.changePassword(pwd, "")
+                        }
+                        if (!isAdded) {
+                            return@launch
+                        }
+                        showPasswordLoadingView(false)
+                        result.fold({
+                            dialog.dismiss()
+                            activity.toast(R.string.settings_password_protection_updated)
+                            mPasswordProtection.setSummary(R.string.protection_password_state_disabled)
+                        }, { failure ->
+                            if (failure.isInvalidPassword()) {
+                                views.inputPasswordConfirmationText.error = getString(R.string.settings_fail_to_update_password_invalid_current_password)
+                            } else {
+                                views.inputPasswordConfirmationText.error = getString(R.string.settings_fail_to_update_password)
                             }
                         })
                     }
