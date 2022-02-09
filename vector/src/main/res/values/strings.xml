@@ -319,6 +319,11 @@
     <string name="dark_theme">Dark Theme</string>
     <string name="black_theme">Black Theme</string>
 
+    <!-- lock time -->
+    <string name="one_minute">1 minute</string>
+    <string name="two_minutes">2 minutes</string>
+    <string name="three_minutes">3 minutes</string>
+
     <!-- permanent notification subtitle -->
     <string name="notification_sync_init">Initializing service</string>
     <string name="notification_sync_in_progress">Synchronising…</string>
@@ -1635,6 +1640,7 @@
     <!-- Directory -->
     <string name="directory_title">Directory</string>
     <string name="settings_theme">Theme</string>
+    <string name="settings_lock_time">Lock time</string>
 
     <!-- matrix error -->
     <string name="failed_to_load_timeline_position">%s was trying to load a specific point in this room’s timeline but was unable to find it.</string>

@@ -50,6 +50,19 @@
         <item>black</item>
     </string-array>
 
+    <!-- Lock time -->
+    <string-array name="lock_time_entries">
+        <item>@string/one_minute</item>
+        <item>@string/two_minutes</item>
+        <item>@string/three_minutes</item>
+    </string-array>
+
+    <string-array name="lock_time_values">
+        <item>1 minute</item>
+        <item>2 minutes</item>
+        <item>3 minutes</item>
+    </string-array>
+
     <!-- media saving choice list -->
     <string-array name="media_saving_choice">
         <item>@string/media_saving_period_3_days</item>

@@ -90,6 +90,15 @@
             android:summary="@string/protection_password_state_enabled"
             android:title="@string/protection_password_option" />
 
+        <im.vector.app.core.preference.VectorListPreference
+            android:defaultValue="@string/one_minute"
+            android:entries="@array/lock_time_entries"
+            android:entryValues="@array/lock_time_values"
+            android:key="LOCK_TIME_KEY"
+            android:summary="%s"
+            android:title="@string/settings_lock_time"
+            app:iconSpaceReserved="false" />
+
     </im.vector.app.core.preference.VectorPreferenceCategory>
 
     <im.vector.app.core.preference.VectorPreferenceCategory
