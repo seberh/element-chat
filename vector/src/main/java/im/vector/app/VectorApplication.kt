@@ -16,15 +16,23 @@
 
 package im.vector.app
 
+import android.app.Activity
 import android.app.Application
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT
+import android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+import android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+import android.content.Intent.FLAG_FROM_BACKGROUND
 import android.content.IntentFilter
 import android.content.res.Configuration
+import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.StrictMode
+import android.util.Log
 import androidx.core.provider.FontRequest
 import androidx.core.provider.FontsContractCompat
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -42,6 +50,7 @@ import com.vanniktech.emoji.google.GoogleEmojiProvider
 import dagger.hilt.android.HiltAndroidApp
 import im.vector.app.core.di.ActiveSessionHolder
 import im.vector.app.core.extensions.configureAndStart
+import im.vector.app.core.extensions.singletonEntryPoint
 import im.vector.app.core.extensions.startSyncing
 import im.vector.app.features.analytics.VectorAnalytics
 import im.vector.app.features.call.webrtc.WebRtcCallManager
@@ -49,10 +58,13 @@ import im.vector.app.features.configuration.VectorConfiguration
 import im.vector.app.features.disclaimer.doNotShowDisclaimerDialog
 import im.vector.app.features.invite.InvitesAcceptor
 import im.vector.app.features.lifecycle.VectorActivityLifecycleCallbacks
+import im.vector.app.features.navigation.Navigator
 import im.vector.app.features.notifications.NotificationDrawerManager
 import im.vector.app.features.notifications.NotificationUtils
 import im.vector.app.features.pin.PinLocker
 import im.vector.app.features.popup.PopupAlertManager
+import im.vector.app.features.protection.BackgroundJobService
+import im.vector.app.features.protection.PasswordActivity
 import im.vector.app.features.rageshake.VectorFileLogger
 import im.vector.app.features.rageshake.VectorUncaughtExceptionHandler
 import im.vector.app.features.room.VectorRoomDisplayNameFallbackProvider
@@ -100,6 +112,9 @@ class VectorApplication :
     @Inject lateinit var autoRageShaker: AutoRageShaker
     @Inject lateinit var vectorFileLogger: VectorFileLogger
     @Inject lateinit var vectorAnalytics: VectorAnalytics
+    protected lateinit var navigator: Navigator
+    private var activityReferences = 0
+    private var isActivityChangingConfigurations = false
 
     // font thread handler
     private var fontThreadHandler: Handler? = null
@@ -121,6 +136,8 @@ class VectorApplication :
         invitesAcceptor.initialize()
         autoRageShaker.initialize()
         vectorUncaughtExceptionHandler.activate(this)
+//        val singletonEntryPoint = appContext.singletonEntryPoint()
+//        navigator = singletonEntryPoint.navigator()
 
         // Remove Log handler statically added by Jitsi
         Timber.forest()
@@ -201,6 +218,59 @@ class VectorApplication :
 
         // Initialize Mapbox before inflating mapViews
         Mapbox.getInstance(this)
+
+        registerActivityLifecycleCallbacks(
+                object : ActivityLifecycleCallbacks {
+
+                    override fun onActivityPaused(activity: Activity) {
+                        Log.d("yyyy", "on Paused")
+                    }
+
+                    override fun onActivityResumed(activity: Activity) {
+//                      navigator.openSettings(activity, directAccess = VectorSettingsActivity.EXTRA_DIRECT_ACCESS_GENERAL)
+
+                        Log.d("yyyy", "on Resumed")
+                        if (BackgroundJobService.isWorking) {
+                            Log.d("yyyy", "is working")
+                            return
+                        }
+
+                        BackgroundJobService.stopWork()
+                    }
+
+                    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+                    override fun onActivityStarted(activity: Activity) {
+                        if (++activityReferences == 1 && !isActivityChangingConfigurations) {
+                            // App enters foreground
+                            Log.d("yyyy", "app go in foreground")
+
+                            // open the password screen
+                            val intent = Intent(appContext, PasswordActivity::class.java)
+                            intent.addFlags(FLAG_ACTIVITY_CLEAR_TOP or
+                                    FLAG_ACTIVITY_NEW_TASK or
+                                    FLAG_ACTIVITY_REORDER_TO_FRONT or
+                                    FLAG_FROM_BACKGROUND)
+                            startActivity(intent)
+                        }
+                    }
+                    override fun onActivityStopped(activity: Activity) {
+                        isActivityChangingConfigurations = activity.isChangingConfigurations();
+                        if (--activityReferences == 0 && !isActivityChangingConfigurations) {
+                            // App enters background
+                            Log.d("yyyy", "app go in background")
+                            if (BackgroundJobService.isWorking)
+                                return
+                            if (activity.intent == null
+                                    || !activity.intent
+                                            .getBooleanExtra(
+                                                    BackgroundJobService.SKIP_BG_CHECK, false)) {
+                                BackgroundJobService.enqueueWork(activity)
+                            }
+                        }
+                    }
+                    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+                    override fun onActivityDestroyed(activity: Activity) {}
+                })
     }
 
     private val startSyncOnFirstStart = object : DefaultLifecycleObserver {
