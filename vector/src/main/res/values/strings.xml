@@ -1445,7 +1445,12 @@
     <string name="settings_password">Password</string>
     <string name="settings_disable_password">Disable protection</string>
     <string name="settings_change_password">Change password</string>
+    <string name="settings_crate_password">Create app password</string>
+    <string name="settings_not_same_password">Passwords not the same</string>
+    <string name="settings_not_rules_password">Passwords do not respect the rules</string>
+    <string name="settings_add_password">Add password protection</string>
     <string name="settings_old_password">Current password</string>
+    <string name="settings_retype_password">Retype password</string>
     <string name="settings_new_password">New password</string>
     <string name="settings_confirm_password">Confirm new password</string>
     <string name="settings_change_password_submit">Update Password</string>
@@ -3167,9 +3172,12 @@
     <string name="error_adding_media_file_to_gallery">Could not add media file to the Gallery</string>
     <string name="error_saving_media_file">Could not save media file</string>
     <string name="change_password_summary">Set a new account password…</string>
+    <string name="create_password_summary">Create an account password…</string>
     <string name="protection_password_option">Password protection</string>
     <string name="protection_password_state_enabled">Enabled</string>
     <string name="protection_password_state_disabled">Disabled</string>
+    <string name="protection_password_wrong">You missed the pass</string>
+    <string name="protection_no_password">No pass for app</string>
 
     <!-- Note to translators: the translation MUST contain the string "${app_name}", which will be replaced by the application name -->
     <string name="template_use_other_session_content_description">Use the latest ${app_name} on your other devices, ${app_name} Web, ${app_name} Desktop, ${app_name} iOS, ${app_name} for Android, or another cross-signing capable Matrix client</string>

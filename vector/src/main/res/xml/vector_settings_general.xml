@@ -81,6 +81,11 @@
         android:title="@string/settings_password_section">
 
         <im.vector.app.core.preference.VectorPreference
+            android:key="SETTINGS_ADD_PASSWORD_PREFERENCE_KEY"
+            android:summary="@string/create_password_summary"
+            android:title="@string/settings_add_password" />
+
+        <im.vector.app.core.preference.VectorPreference
             android:key="SETTINGS_CHANGE_PASSWORD_PREFERENCE_KEY"
             android:summary="@string/change_password_summary"
             android:title="@string/settings_change_password" />

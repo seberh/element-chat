@@ -49,12 +49,14 @@ import im.vector.app.core.resources.ColorProvider
 import im.vector.app.core.utils.TextUtils
 import im.vector.app.core.utils.getSizeOfFiles
 import im.vector.app.core.utils.toast
+import im.vector.app.databinding.DialogAddPasswordBinding
 import im.vector.app.databinding.DialogChangePasswordBinding
 import im.vector.app.databinding.DialogDisablePasswordProtectionBinding
 import im.vector.app.features.MainActivity
 import im.vector.app.features.MainActivityArgs
 import im.vector.app.features.discovery.DiscoverySettingsFragment
 import im.vector.app.features.navigation.SettingsActivityPayload
+import im.vector.app.features.protection.SharedSettings
 import im.vector.app.features.workers.signout.SignOutUiWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -79,6 +81,13 @@ class VectorSettingsGeneralFragment @Inject constructor(
         VectorSettingsBaseFragment(),
         GalleryOrCameraDialogHelper.Listener {
 
+    private val PASSWORD_PATTERN = "(?=[A-Za-z0-9@#\$%^&+!=]+\$)^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[@#\$%^&+!=])(?=.{10,}).*\$"
+    private val EMPTY = ""
+    private val APP_PASSWORD = "AppPassword"
+    private val APP_PASSWORD_ENABLED = "AppPasswordEnabled"
+
+    lateinit var sharedSettings:SharedSettings
+
 //    override var titleRes = R.string.settings_general_title
     override var titleRes = R.string.room_list_quick_actions_settings
 
@@ -97,6 +106,9 @@ class VectorSettingsGeneralFragment @Inject constructor(
     }
     private val mPasswordPreference by lazy {
         findPreference<VectorPreference>(VectorPreferences.SETTINGS_CHANGE_PASSWORD_PREFERENCE_KEY)!!
+    }
+    private val mAddPasswordPreference by lazy {
+        findPreference<VectorPreference>(VectorPreferences.SETTINGS_ADD_PASSWORD_PREFERENCE_KEY)!!
     }
     private val mPasswordProtection by lazy {
         findPreference<VectorPreference>(VectorPreferences.SETTINGS_PASSWORD_PROTECTION_KEY)!!
@@ -160,6 +172,8 @@ class VectorSettingsGeneralFragment @Inject constructor(
     }
 
     override fun bindPref() {
+        sharedSettings = SharedSettings(requireContext())
+
         // Avatar
         mUserAvatarPreference.let {
             it.onPreferenceClickListener = Preference.OnPreferenceClickListener {
@@ -189,6 +203,15 @@ class VectorSettingsGeneralFragment @Inject constructor(
             mPasswordPreference.isVisible = false
         }
 
+        mAddPasswordPreference.onPreferenceClickListener = Preference.OnPreferenceClickListener {
+            onAddAppPasswordClick()
+            false
+        }
+
+        if (sharedSettings.getValueBoolean(APP_PASSWORD_ENABLED, false))
+            mPasswordProtection.setSummary(R.string.protection_password_state_enabled)
+        else
+            mPasswordProtection.setSummary(R.string.protection_password_state_disabled)
         mPasswordProtection.onPreferenceClickListener = Preference.OnPreferenceClickListener {
             try {
                 onPasswordProtectionDisable()
@@ -471,7 +494,110 @@ class VectorSettingsGeneralFragment @Inject constructor(
             dialog.show()
         }
     }
+    
+    /**
+     * Create an app password protection
+     */
+    private fun onAddAppPasswordClick() {
+        activity?.let { activity ->
+            val view: ViewGroup = activity.layoutInflater.inflate(R.layout.dialog_add_password, null) as ViewGroup
+            val views = DialogAddPasswordBinding.bind(view)
 
+            val dialog = MaterialAlertDialogBuilder(activity)
+                    .setView(view)
+                    .setCancelable(false)
+                    .setPositiveButton(R.string.settings_crate_password, null)
+                    .setNegativeButton(R.string.action_cancel, null)
+                    .setOnDismissListener {
+                        view.hideKeyboard()
+                    }
+                    .create()
+
+            dialog.setOnShowListener {
+                val createButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                val cancelButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                createButton.isEnabled = false
+
+                fun updateUi() {
+                    val createPwd = views.createPasswordText.text.toString()
+                    val retypePwd = views.retypePasswordText.text.toString()
+
+                    createButton.isEnabled = createPwd.isNotEmpty() && retypePwd.isNotEmpty()
+                }
+
+                views.createPasswordText.addTextChangedListener(object : SimpleTextWatcher() {
+                    override fun afterTextChanged(s: Editable) {
+                        views.createPasswordText.error = null
+                        updateUi()
+                    }
+                })
+
+                views.retypePasswordText.addTextChangedListener(object : SimpleTextWatcher() {
+                    override fun afterTextChanged(s: Editable) {
+                        updateUi()
+                    }
+                })
+
+                fun showPasswordLoadingView(toShow: Boolean) {
+                    if (toShow) {
+                        views.createPasswordText.isEnabled = false
+                        views.retypePasswordText.isEnabled = false
+                        views.changePasswordLoader.isVisible = true
+                        createButton.isEnabled = false
+                        cancelButton.isEnabled = false
+                    } else {
+                        views.createPasswordText.isEnabled = true
+                        views.retypePasswordText.isEnabled = true
+                        views.changePasswordLoader.isVisible = false
+                        createButton.isEnabled = true
+                        cancelButton.isEnabled = true
+                    }
+                }
+
+                createButton.debouncedClicks {
+                    // Hide passwords during processing
+                    views.createPasswordText.hidePassword()
+                    views.retypePasswordText.hidePassword()
+
+                    view.hideKeyboard()
+
+                    val appPwd = views.createPasswordText.text.toString()
+                    val retypePwd = views.retypePasswordText.text.toString()
+
+                    showPasswordLoadingView(true)
+                    lifecycleScope.launch {
+                        val result = runCatching {
+                            //session.changePassword(oldPwd, newPwd)
+                            if (appPwd.equals(retypePwd)) {
+                                val pattern = Regex(PASSWORD_PATTERN)
+
+                                if (pattern.containsMatchIn(appPwd)) {
+                                    sharedSettings.save(APP_PASSWORD, appPwd)
+                                } else
+                                    activity.toast(R.string.settings_not_rules_password)
+                            } else
+                                activity.toast(R.string.settings_not_same_password)
+                        }
+                        if (!isAdded) {
+                            return@launch
+                        }
+                        showPasswordLoadingView(false)
+                        result.fold({
+                            dialog.dismiss()
+                            activity.toast(R.string.settings_password_updated)
+                        }, { failure ->
+                            if (failure.isInvalidPassword()) {
+                                views.createPasswordText.error = getString(R.string.settings_fail_to_update_password_invalid_current_password)
+                            } else {
+                                views.createPasswordText.error = getString(R.string.settings_fail_to_update_password)
+                            }
+                        })
+                    }
+                }
+            }
+            dialog.show()
+        }
+    }
 
     /**
      * Insert password to disable pass protection.
@@ -534,7 +660,19 @@ class VectorSettingsGeneralFragment @Inject constructor(
                     showPasswordLoadingView(true)
                     lifecycleScope.launch {
                         val result = runCatching {
-//                            session.changePassword(pwd, "")
+                            if (!sharedSettings.getValueString(APP_PASSWORD).equals(EMPTY)) {
+                                if (sharedSettings.getValueString(APP_PASSWORD).equals(pwd)) {
+                                    if (sharedSettings.getValueBoolean(APP_PASSWORD_ENABLED, false)) {
+                                        sharedSettings.save(APP_PASSWORD_ENABLED, false)
+                                        mPasswordProtection.setSummary(R.string.protection_password_state_disabled)
+                                    } else {
+                                        sharedSettings.save(APP_PASSWORD_ENABLED, true)
+                                        mPasswordProtection.setSummary(R.string.protection_password_state_enabled)
+                                    }
+                                } else
+                                    requireContext().toast(R.string.protection_password_wrong)
+                            } else
+                                requireContext().toast(R.string.protection_no_password)
                         }
                         if (!isAdded) {
                             return@launch
@@ -543,7 +681,6 @@ class VectorSettingsGeneralFragment @Inject constructor(
                         result.fold({
                             dialog.dismiss()
                             activity.toast(R.string.settings_password_protection_updated)
-                            mPasswordProtection.setSummary(R.string.protection_password_state_disabled)
                         }, { failure ->
                             if (failure.isInvalidPassword()) {
                                 views.inputPasswordConfirmationText.error = getString(R.string.settings_fail_to_update_password_invalid_current_password)
