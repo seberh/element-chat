@@ -52,12 +52,14 @@
 
     <!-- Lock time -->
     <string-array name="lock_time_entries">
+        <item>@string/immediately</item>
         <item>@string/one_minute</item>
         <item>@string/two_minutes</item>
         <item>@string/three_minutes</item>
     </string-array>
 
     <string-array name="lock_time_values">
+        <item>Immediately</item>
         <item>1 minute</item>
         <item>2 minutes</item>
         <item>3 minutes</item>

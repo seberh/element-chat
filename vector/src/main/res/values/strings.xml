@@ -320,6 +320,7 @@
     <string name="black_theme">Black Theme</string>
 
     <!-- lock time -->
+    <string name="immediately">Immediately</string>
     <string name="one_minute">1 minute</string>
     <string name="two_minutes">2 minutes</string>
     <string name="three_minutes">3 minutes</string>
@@ -3789,5 +3790,7 @@
 
     <string name="hello_first_fragment">Hello first fragment</string>
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="not_allowed_yet">Not allowed to authenticate yet!</string>
+    <string name="wrong_password">Wrong password!</string>
 
 </resources>

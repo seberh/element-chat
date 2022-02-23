@@ -43,6 +43,7 @@ import im.vector.app.core.extensions.toMvRxBundle
 import im.vector.app.core.intent.getFilenameFromUri
 import im.vector.app.core.platform.SimpleTextWatcher
 import im.vector.app.core.preference.UserAvatarPreference
+import im.vector.app.core.preference.VectorListPreference
 import im.vector.app.core.preference.VectorPreference
 import im.vector.app.core.preference.VectorSwitchPreference
 import im.vector.app.core.resources.ColorProvider
@@ -84,6 +85,7 @@ class VectorSettingsGeneralFragment @Inject constructor(
     private val PASSWORD_PATTERN = "(?=[A-Za-z0-9@#\$%^&+!=]+\$)^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[@#\$%^&+!=])(?=.{10,}).*\$"
     private val EMPTY = ""
     private val APP_PASSWORD = "AppPassword"
+    private val LOCK_TIME = "LockTime"
     private val APP_PASSWORD_ENABLED = "AppPasswordEnabled"
 
     lateinit var sharedSettings:SharedSettings
@@ -113,6 +115,9 @@ class VectorSettingsGeneralFragment @Inject constructor(
     private val mPasswordProtection by lazy {
         findPreference<VectorPreference>(VectorPreferences.SETTINGS_PASSWORD_PROTECTION_KEY)!!
     }
+//    private val mLockTime by lazy {
+//        findPreference<VectorPreference>(VectorPreferences.SETTINGS_LOCK_TIME_KEY)!!
+//    }
     private val mIdentityServerPreference by lazy {
         findPreference<VectorPreference>(VectorPreferences.SETTINGS_IDENTITY_SERVER_PREFERENCE_KEY)!!
     }
@@ -219,6 +224,26 @@ class VectorSettingsGeneralFragment @Inject constructor(
                 Log.d("yyyy", e.message.toString())
             }
             false
+        }
+
+        findPreference<VectorListPreference>(VectorPreferences.SETTINGS_LOCK_TIME_KEY)!!.onPreferenceChangeListener = Preference.OnPreferenceChangeListener { _, waitingTime ->
+            if (waitingTime is String) {
+                Log.d("yyyy", "pref: " + waitingTime)
+
+                var time = when (waitingTime) {
+                    getString(R.string.one_minute) -> 60
+                    getString(R.string.two_minutes) -> 120
+                    getString(R.string.three_minutes) -> 180
+                    else -> 0
+                }
+
+                Log.d("yyyy", "pref: " + time)
+                sharedSettings.save(LOCK_TIME, time)
+
+                true
+            } else {
+                false
+            }
         }
 
         val openDiscoveryScreenPreferenceClickListener = Preference.OnPreferenceClickListener {

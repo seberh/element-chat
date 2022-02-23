@@ -15,6 +15,7 @@ public class BackgroundJobService extends JobIntentService {
 
     public static final int JOB_ID = 1000;
     public static final String SKIP_BG_CHECK = "skipBackgroundCheck";
+    private final String LOCK_TIME = "LockTime";
 
     public static volatile boolean shouldContinue = false;
 
@@ -26,10 +27,13 @@ public class BackgroundJobService extends JobIntentService {
     public static boolean stopPassProtect = false;
     public static boolean isWorking = false;
 
+    private static SharedSettings sharedSettings;
+
     public static void enqueueWork(Context context) {
         Intent bgJobService = new Intent(context, BackgroundJobService.class);
         BackgroundJobService.enqueueWork(
                 context, BackgroundJobService.class, BackgroundJobService.JOB_ID, bgJobService);
+        sharedSettings = new SharedSettings(context);
     }
 
     public static void stopWork() {
@@ -50,7 +54,8 @@ public class BackgroundJobService extends JobIntentService {
                     toast("background work started");
                     isWorking = true;
 
-                    int time = 30;
+                    int time = sharedSettings.getValueInt(LOCK_TIME);
+                    Log.d("yyyy", "pref: " + time);
                     while (time > 0) {
                         Thread.sleep(1000);
                         Log.d("yyyy", time + "sec");
