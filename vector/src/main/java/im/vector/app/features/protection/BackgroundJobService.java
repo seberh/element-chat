@@ -16,6 +16,7 @@ public class BackgroundJobService extends JobIntentService {
     public static final int JOB_ID = 1000;
     public static final String SKIP_BG_CHECK = "skipBackgroundCheck";
     private final String LOCK_TIME = "LockTime";
+    private final String APP_PASSWORD_ENABLED = "AppPasswordEnabled";
 
     public static volatile boolean shouldContinue = false;
 
@@ -54,12 +55,14 @@ public class BackgroundJobService extends JobIntentService {
                     toast("background work started");
                     isWorking = true;
 
-                    int time = sharedSettings.getValueInt(LOCK_TIME);
-                    Log.d("yyyy", "pref: " + time);
-                    while (time > 0) {
-                        Thread.sleep(1000);
-                        Log.d("yyyy", time + "sec");
-                        time--;
+                    if (sharedSettings.getValueBoolean(APP_PASSWORD_ENABLED, false)) {
+                        int time = sharedSettings.getValueInt(LOCK_TIME);
+                        Log.d("yyyy", "pref: " + time);
+                        while (time > 0) {
+                            Thread.sleep(1000);
+                            Log.d("yyyy", time + "sec");
+                            time--;
+                        }
                     }
                     toast("background work finished");
                     isWorking = false;

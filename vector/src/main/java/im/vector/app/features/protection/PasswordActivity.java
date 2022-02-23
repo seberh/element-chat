@@ -17,6 +17,7 @@ public class PasswordActivity extends AppCompatActivity {
     private Button login;
     private SharedSettings sharedSettings;
     private final String APP_PASSWORD = "AppPassword";
+    private final String APP_PASSWORD_ENABLED = "AppPasswordEnabled";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +27,9 @@ public class PasswordActivity extends AppCompatActivity {
         sharedSettings = new SharedSettings(this);
         inputPassword = findViewById(R.id.input_password_confirmation_text);
         login = findViewById(R.id.loginSubmit);
+
+        if (!sharedSettings.getValueBoolean(APP_PASSWORD_ENABLED, false))
+            return;
 
         login.setOnClickListener(v -> {
             if (BackgroundJobService.isWorking)

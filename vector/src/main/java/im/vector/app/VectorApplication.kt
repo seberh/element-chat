@@ -63,6 +63,7 @@ import im.vector.app.features.pin.PinLocker
 import im.vector.app.features.popup.PopupAlertManager
 import im.vector.app.features.protection.BackgroundJobService
 import im.vector.app.features.protection.PasswordActivity
+import im.vector.app.features.protection.SharedSettings
 import im.vector.app.features.rageshake.VectorFileLogger
 import im.vector.app.features.rageshake.VectorUncaughtExceptionHandler
 import im.vector.app.features.room.VectorRoomDisplayNameFallbackProvider
@@ -113,6 +114,8 @@ class VectorApplication :
     protected lateinit var navigator: Navigator
     private var activityReferences = 0
     private var isActivityChangingConfigurations = false
+    private val APP_PASSWORD_ENABLED = "AppPasswordEnabled"
+    lateinit var sharedSettings: SharedSettings
 
     // font thread handler
     private var fontThreadHandler: Handler? = null
@@ -134,6 +137,7 @@ class VectorApplication :
         invitesAcceptor.initialize()
         autoRageShaker.initialize()
         vectorUncaughtExceptionHandler.activate(this)
+        sharedSettings = SharedSettings(appContext)
 //        val singletonEntryPoint = appContext.singletonEntryPoint()
 //        navigator = singletonEntryPoint.navigator()
 
@@ -242,6 +246,8 @@ class VectorApplication :
                             // App enters foreground
                             Log.d("yyyy", "app go in foreground")
 
+                            if (!sharedSettings.getValueBoolean(APP_PASSWORD_ENABLED,false))
+                                return
                             // open the password screen
                             val intent = Intent(appContext, PasswordActivity::class.java)
                             intent.addFlags(FLAG_ACTIVITY_CLEAR_TOP or
