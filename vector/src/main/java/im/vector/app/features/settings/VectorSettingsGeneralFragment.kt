@@ -39,6 +39,7 @@ import im.vector.app.R
 import im.vector.app.core.dialogs.GalleryOrCameraDialogHelper
 import im.vector.app.core.extensions.hideKeyboard
 import im.vector.app.core.extensions.hidePassword
+import im.vector.app.core.extensions.restart
 import im.vector.app.core.extensions.toMvRxBundle
 import im.vector.app.core.intent.getFilenameFromUri
 import im.vector.app.core.platform.SimpleTextWatcher
@@ -58,6 +59,7 @@ import im.vector.app.features.MainActivityArgs
 import im.vector.app.features.discovery.DiscoverySettingsFragment
 import im.vector.app.features.navigation.SettingsActivityPayload
 import im.vector.app.features.protection.SharedSettings
+import im.vector.app.features.themes.ThemeUtils
 import im.vector.app.features.workers.signout.SignOutUiWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -193,6 +195,19 @@ class VectorSettingsGeneralFragment @Inject constructor(
                 newValue
                         ?.let { value -> (value as? String)?.trim() }
                         ?.let { value -> onDisplayNameChanged(value) }
+                false
+            }
+        }
+
+        // Themes
+        findPreference<VectorListPreference>(ThemeUtils.APPLICATION_THEME_KEY)!!
+                .onPreferenceChangeListener = Preference.OnPreferenceChangeListener { _, newValue ->
+            if (newValue is String) {
+                ThemeUtils.setApplicationTheme(requireContext().applicationContext, newValue)
+                // Restart the Activity
+                activity?.restart()
+                true
+            } else {
                 false
             }
         }
