@@ -1,7 +1,6 @@
 package im.vector.app.features.protection;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
 

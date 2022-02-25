@@ -18,14 +18,17 @@
 
 package im.vector.app.features.settings
 
+import android.app.Activity
 import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CheckedTextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
@@ -54,8 +57,10 @@ import im.vector.app.core.utils.toast
 import im.vector.app.databinding.DialogAddPasswordBinding
 import im.vector.app.databinding.DialogChangePasswordBinding
 import im.vector.app.databinding.DialogDisablePasswordProtectionBinding
+import im.vector.app.databinding.DialogSelectTextSizeBinding
 import im.vector.app.features.MainActivity
 import im.vector.app.features.MainActivityArgs
+import im.vector.app.features.configuration.VectorConfiguration
 import im.vector.app.features.discovery.DiscoverySettingsFragment
 import im.vector.app.features.navigation.SettingsActivityPayload
 import im.vector.app.features.protection.SharedSettings
@@ -79,6 +84,7 @@ import java.util.UUID
 import javax.inject.Inject
 
 class VectorSettingsGeneralFragment @Inject constructor(
+        private val vectorConfiguration: VectorConfiguration,
         colorProvider: ColorProvider
 ) :
         VectorSettingsBaseFragment(),
@@ -107,6 +113,9 @@ class VectorSettingsGeneralFragment @Inject constructor(
     }
     private val mDisplayNamePreference by lazy {
         findPreference<EditTextPreference>("SETTINGS_DISPLAY_NAME_PREFERENCE_KEY")!!
+    }
+    private val textSizePreference by lazy {
+        findPreference<VectorPreference>(VectorPreferences.SETTINGS_INTERFACE_TEXT_SIZE_KEY)!!
     }
     private val mPasswordPreference by lazy {
         findPreference<VectorPreference>(VectorPreferences.SETTINGS_CHANGE_PASSWORD_PREFERENCE_KEY)!!
@@ -210,6 +219,14 @@ class VectorSettingsGeneralFragment @Inject constructor(
             } else {
                 false
             }
+        }
+
+        // Text size
+        textSizePreference.summary = getString(FontScale.getFontScaleValue(requireActivity()).nameResId)
+
+        textSizePreference.onPreferenceClickListener = Preference.OnPreferenceClickListener {
+            activity?.let { displayTextSizeSelection(it) }
+            true
         }
 
         // Password
@@ -360,6 +377,33 @@ class VectorSettingsGeneralFragment @Inject constructor(
 
             false
         }
+    }
+
+    private fun displayTextSizeSelection(activity: Activity) {
+        val layout = layoutInflater.inflate(R.layout.dialog_select_text_size, null)
+        val views = DialogSelectTextSizeBinding.bind(layout)
+
+        val dialog = MaterialAlertDialogBuilder(activity)
+                .setTitle(R.string.font_size)
+                .setView(layout)
+                .setPositiveButton(R.string.ok, null)
+                .setNegativeButton(R.string.action_cancel, null)
+                .show()
+
+        val index = FontScale.getFontScaleValue(activity).index
+
+        views.textSelectionGroupView.children
+                .filterIsInstance(CheckedTextView::class.java)
+                .forEachIndexed { i, v ->
+                    v.isChecked = i == index
+
+                    v.debouncedClicks {
+                        dialog.dismiss()
+                        FontScale.updateFontScale(activity, i)
+                        vectorConfiguration.applyToApplicationContext()
+                        activity.restart()
+                    }
+                }
     }
 
     override fun onResume() {

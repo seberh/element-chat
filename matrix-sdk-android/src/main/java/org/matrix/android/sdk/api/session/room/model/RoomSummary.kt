@@ -30,7 +30,7 @@ import org.matrix.android.sdk.api.session.room.timeline.TimelineEvent
 data class RoomSummary(
         val roomId: String,
         // Computed display name
-        val displayName: String = "",
+        var displayName: String = "",
         val name: String = "",
         val topic: String = "",
         val avatarUrl: String = "",

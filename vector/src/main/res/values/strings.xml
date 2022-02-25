@@ -1314,6 +1314,8 @@
     <string name="settings_clear_cache">Clear cache</string>
     <string name="settings_clear_media_cache">Clear media cache</string>
 
+    <string name="settings_set_alias_title">Set alias</string>
+    <string name="settings_set_alias_instruction">Place insert an alias for the user</string>
     <string name="settings_disable_password_protection">Disable password protection</string>
     <string name="settings_disable_password_protection_instruction">Place insert the current password</string>
     <string name="settings_password_section">Application Password</string>
@@ -1443,6 +1445,7 @@
     <string name="account_phone_number_already_used_error">This phone number is already in use.</string>
     <string name="account_email_error">An error occurred while verifying your email address.</string>
 
+    <string name="settings_set_alias">Set alias</string>
     <string name="settings_password">Password</string>
     <string name="settings_disable_password">Disable protection</string>
     <string name="settings_change_password">Change password</string>
@@ -1457,6 +1460,7 @@
     <string name="settings_change_password_submit">Update Password</string>
     <string name="settings_fail_to_update_password">Failed to update password</string>
     <string name="settings_fail_to_update_password_invalid_current_password">The password is not valid</string>
+    <string name="settings_fail_to_set_alias">There was an error for alias</string>
     <string name="settings_password_updated">Your password has been updated</string>
     <string name="settings_password_protection_updated">Your protection state has been updated</string>
     <string name="settings_unignore_user">Show all messages from %s?\n\nNote that this action will restart the app and it may take some time.</string>
@@ -2534,6 +2538,7 @@
     <string name="room_list_quick_actions_low_priority_add">"Add to low priority"</string>
     <string name="room_list_quick_actions_low_priority_remove">"Remove from low priority"</string>
     <string name="room_list_quick_actions_leave">"Leave the room"</string>
+    <string name="room_list_quick_actions_set_alias">"Set alias"</string>
     <string name="room_list_quick_actions_room_settings">"Room settings"</string>
 
     <string name="notice_member_no_changes">"%1$s made no changes"</string>
@@ -3790,5 +3795,8 @@
 
     <string name="not_allowed_yet">Not allowed to authenticate yet!</string>
     <string name="wrong_password">Wrong password!</string>
+    <string name="set_alias">Set alias</string>
+    <string name="alias_added">Alias added</string>
+    <string name="alias_reset">Will be displayed after app restart</string>
 
 </resources>

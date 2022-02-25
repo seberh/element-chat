@@ -77,6 +77,7 @@ class RoomListQuickActionsEpoxyController @Inject constructor(
             }
         }
 
+        RoomListQuickActionsSharedAction.SetAlias(roomSummary.roomId, showIcon = !true).toBottomSheetItem()
         RoomListQuickActionsSharedAction.Leave(roomSummary.roomId, showIcon = !true).toBottomSheetItem()
     }
 
@@ -86,6 +87,22 @@ class RoomListQuickActionsEpoxyController @Inject constructor(
         RoomNotificationState.MENTIONS_ONLY      -> R.string.room_settings_mention_and_keyword_only
         RoomNotificationState.MUTE               -> R.string.room_settings_none
         else                                     -> null
+    }
+
+    private fun RoomListQuickActionsSharedAction.SetAlias.toBottomSheetItem() {
+        val host = this@RoomListQuickActionsEpoxyController
+        return bottomSheetActionItem {
+            id("action_set_alias")
+            selected(false)
+            if (iconResId != null) {
+                iconRes(iconResId)
+            } else {
+                showIcon(false)
+            }
+            textRes(titleRes)
+            destructive(this@toBottomSheetItem.destructive)
+            listener { host.listener?.didSelectMenuAction(this@toBottomSheetItem) }
+        }
     }
 
     private fun RoomListQuickActionsSharedAction.Leave.toBottomSheetItem() {

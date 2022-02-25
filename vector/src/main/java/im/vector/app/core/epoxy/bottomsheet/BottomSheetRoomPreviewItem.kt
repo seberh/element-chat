@@ -17,6 +17,7 @@
 package im.vector.app.core.epoxy.bottomsheet
 
 import android.content.res.ColorStateList
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -33,6 +34,7 @@ import im.vector.app.core.extensions.setTextOrHide
 import im.vector.app.core.resources.ColorProvider
 import im.vector.app.core.resources.StringProvider
 import im.vector.app.features.home.AvatarRenderer
+import im.vector.app.features.protection.SharedSettings
 import im.vector.app.features.themes.ThemeUtils
 import org.matrix.android.sdk.api.util.MatrixItem
 
@@ -51,12 +53,17 @@ abstract class BottomSheetRoomPreviewItem : VectorEpoxyModel<BottomSheetRoomPrev
     @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash) var settingsClickListener: ClickListener? = null
     @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash) var lowPriorityClickListener: ClickListener? = null
     @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash) var favoriteClickListener: ClickListener? = null
+    private lateinit var sharedSettings: SharedSettings
 
     override fun bind(holder: Holder) {
         super.bind(holder)
+        sharedSettings = SharedSettings(holder.view.context)
         avatarRenderer.render(matrixItem, holder.avatar)
         holder.avatar.onClick(settingsClickListener)
-        holder.roomName.setTextOrHide(matrixItem.displayName)
+        if (sharedSettings.getValueString(matrixItem.id).equals(""))
+            holder.roomName.setTextOrHide(matrixItem.displayName)
+        else
+            holder.roomName.setTextOrHide(sharedSettings.getValueString(matrixItem.id).toString())
         setLowPriorityState(holder, izLowPriority)
         setFavoriteState(holder, izFavorite)
 

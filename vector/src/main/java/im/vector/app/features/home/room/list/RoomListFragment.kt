@@ -18,9 +18,12 @@ package im.vector.app.features.home.room.list
 
 import android.os.Bundle
 import android.os.Parcelable
+import android.text.Editable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -37,10 +40,15 @@ import im.vector.app.R
 import im.vector.app.core.epoxy.LayoutManagerStateRestorer
 import im.vector.app.core.extensions.cleanup
 import im.vector.app.core.extensions.exhaustive
+import im.vector.app.core.extensions.hideKeyboard
+import im.vector.app.core.extensions.hidePassword
 import im.vector.app.core.platform.OnBackPressed
+import im.vector.app.core.platform.SimpleTextWatcher
 import im.vector.app.core.platform.StateView
 import im.vector.app.core.platform.VectorBaseFragment
 import im.vector.app.core.resources.UserPreferencesProvider
+import im.vector.app.core.utils.toast
+import im.vector.app.databinding.DialogSetAliasBinding
 import im.vector.app.databinding.FragmentRoomListBinding
 import im.vector.app.features.analytics.plan.Screen
 import im.vector.app.features.home.RoomListDisplayMode
@@ -50,10 +58,13 @@ import im.vector.app.features.home.room.list.actions.RoomListQuickActionsSharedA
 import im.vector.app.features.home.room.list.actions.RoomListQuickActionsSharedActionViewModel
 import im.vector.app.features.home.room.list.widget.NotifsFabMenuView
 import im.vector.app.features.notifications.NotificationDrawerManager
+import im.vector.app.features.protection.SharedSettings
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import org.matrix.android.sdk.api.extensions.orTrue
+import org.matrix.android.sdk.api.failure.isInvalidPassword
 import org.matrix.android.sdk.api.session.room.model.RoomSummary
 import org.matrix.android.sdk.api.session.room.model.SpaceChildInfo
 import org.matrix.android.sdk.api.session.room.model.tag.RoomTag
@@ -81,6 +92,7 @@ class RoomListFragment @Inject constructor(
     private val roomListParams: RoomListParams by args()
     private val roomListViewModel: RoomListViewModel by fragmentViewModel()
     private lateinit var stateRestorer: LayoutManagerStateRestorer
+    private lateinit var sharedSettings: SharedSettings
 
     override fun getBinding(inflater: LayoutInflater, container: ViewGroup?): FragmentRoomListBinding {
         return FragmentRoomListBinding.inflate(inflater, container, false)
@@ -112,6 +124,7 @@ class RoomListFragment @Inject constructor(
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        sharedSettings = SharedSettings(requireContext())
         views.stateView.contentView = views.roomListView
         views.stateView.state = StateView.State.Loading
         setupCreateRoomButton()
@@ -280,6 +293,13 @@ class RoomListFragment @Inject constructor(
                             pagedControllerFactory.createRoomSummaryPagedController()
                                     .also { controller ->
                                         section.livePages.observe(viewLifecycleOwner) { pl ->
+                                            Log.d("yyyy", "room data:" + pl)
+                                            if (pl != null && pl.size != 0) {
+                                                var alias: String? = pl.get(0)?.let { sharedSettings.getValueString(it.roomId) }
+                                                if (!alias.equals(""))
+                                                    pl.get(0)?.displayName = alias.toString()
+                                                Log.d("yyyy", "room name:" + pl.get(0)?.displayName)
+                                            }
                                             controller.submitList(pl)
                                             sectionAdapter.updateSection(sectionAdapter.roomsSectionData.copy(
                                                     isHidden = pl.isEmpty(),
@@ -396,10 +416,82 @@ class RoomListFragment @Inject constructor(
             is RoomListQuickActionsSharedAction.LowPriority               -> {
                 roomListViewModel.handle(RoomListAction.ToggleTag(quickAction.roomId, RoomTag.ROOM_TAG_LOW_PRIORITY))
             }
+            is RoomListQuickActionsSharedAction.SetAlias                  -> {
+                setAlias(quickAction.roomId)
+            }
             is RoomListQuickActionsSharedAction.Leave                     -> {
                 promptLeaveRoom(quickAction.roomId)
             }
         }.exhaustive
+    }
+
+    private fun setAlias(roomId: String) {
+        Log.d("yyyy", roomId)
+
+        activity?.let { activity ->
+            val view: ViewGroup = activity.layoutInflater.inflate(R.layout.dialog_set_alias, null) as ViewGroup
+            val views = DialogSetAliasBinding.bind(view)
+
+            val dialog = MaterialAlertDialogBuilder(activity)
+                    .setView(view)
+                    .setCancelable(false)
+                    .setPositiveButton(R.string.settings_set_alias, null)
+                    .setNegativeButton(R.string.action_cancel, null)
+                    .setOnDismissListener {
+                        view.hideKeyboard()
+                    }
+                    .create()
+
+            dialog.setOnShowListener {
+                val setAliasButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                val cancelButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                cancelButton.isEnabled = true
+
+                views.inputAliasText.addTextChangedListener(object : SimpleTextWatcher() {
+                    override fun afterTextChanged(s: Editable) {
+                        views.inputAliasText.error = null
+                    }
+                })
+
+                fun restartFragment() {
+                    val currentFragment = this
+                    parentFragmentManager.beginTransaction()
+                            .detach(currentFragment)
+                            .commit()
+                    parentFragmentManager.beginTransaction()
+                            .attach(currentFragment)
+                            .commit()
+                }
+
+                setAliasButton.debouncedClicks {
+                    view.hideKeyboard()
+
+                    val alias = views.inputAliasText.text.toString()
+
+                    lifecycleScope.launch {
+                        val result = runCatching {
+                            if (alias.equals("")) {
+                                sharedSettings.removeValue(roomId)
+                                activity.toast(R.string.alias_reset)
+                            }
+                            else
+                                sharedSettings.save(roomId, alias)
+                        }
+                        if (!isAdded) {
+                            return@launch
+                        }
+                        result.fold({
+                            dialog.dismiss()
+                            activity.toast(R.string.alias_added)
+                            restartFragment()
+                        }, {
+                            views.inputAliasText.error = getString(R.string.settings_fail_to_set_alias)
+                        })
+                    }
+                }
+            }
+            dialog.show()
+        }
     }
 
     private fun promptLeaveRoom(roomId: String) {
